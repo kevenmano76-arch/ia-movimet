@@ -3,33 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keven IA // Rastreamento</title>
+    <title>PANOPTICORE // ADVANCED TRACKER</title>
     <style>
         body { margin: 0; background: #000; color: #00FF00; font-family: 'Courier New', monospace; overflow: hidden; }
-        #webcam { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        #webcam { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
         canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        
-        #ui-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        h1 { text-shadow: 0 0 10px #00FF00; margin-bottom: 30px; }
-        button { background: transparent; border: 1px solid #00FF00; color: #00FF00; padding: 15px 30px; cursor: pointer; font-family: monospace; margin: 10px; width: 250px; }
-
-        #menu { position: fixed; top: 10px; right: 10px; z-index: 20; background: #000; border: 1px solid #00FF00; padding: 10px; display: none; }
-        .menu-item { display: block; color: #00FF00; padding: 5px; cursor: pointer; }
+        #ui-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .titulo { font-size: 20px; letter-spacing: 3px; margin-bottom: 20px; text-shadow: 0 0 5px #00FF00; }
+        button { background: transparent; border: 1px solid #00FF00; color: #00FF00; padding: 15px 30px; cursor: pointer; font-family: inherit; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="ui-overlay">
-        <h1>Keven IA // Rastreamento</h1>
-        <button onclick="iniciar(true)">Múltiplos Alvos (COCO-SSD)</button>
-        <button onclick="iniciar(false)">Visualização Única (Instantâneo)</button>
-        <button onclick="abrirSobre()">Sobre Nós</button>
-    </div>
-
-    <div id="menu">
-        <div class="menu-item" onclick="abrirSobre()">Sobre Nós</div>
-        <div class="menu-item" onclick="mudarCamera('user')">Câmera Frontal</div>
-        <div class="menu-item" onclick="mudarCamera('environment')">Câmera Traseira</div>
+        <div class="titulo">PANOPTICORE // ADVANCED TRACKER</div>
+        <button id="btn-init">INITIALIZE SENSORS</button>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -42,43 +30,30 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
-        let modoMultiplo = true;
-        let model = null;
+        const btn = document.getElementById('btn-init');
 
-        async function iniciar(multiplo) {
-            modoMultiplo = multiplo;
-            document.getElementById('ui-overlay').style.display = 'none';
-            document.getElementById('menu').style.display = 'block';
-            
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            
-            if (!model) model = await cocoSsd.load();
-            loop();
-        }
+        btn.onclick = async () => {
+            btn.innerText = "CARREGANDO...";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                document.getElementById('ui-overlay').style.display = 'none';
 
-        async function loop() {
-            const predictions = await model.detect(video);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (modoMultiplo) {
-                predictions.forEach(p => {
-                    ctx.strokeStyle = '#00FF00';
-                    ctx.strokeRect(p.bbox[0], p.bbox[1], p.bbox[2], p.bbox[3]);
-                    ctx.fillText(p.class, p.bbox[0], p.bbox[1] > 10 ? p.bbox[1] - 5 : 10);
-                });
-            } else {
-                const person = predictions.find(p => p.class === 'person');
-                if (person) {
-                    ctx.strokeStyle = '#00FF00';
-                    ctx.strokeRect(person.bbox[0], person.bbox[1], person.bbox[2], person.bbox[3]);
-                }
+                const model = await cocoSsd.load();
+                setInterval(async () => {
+                    const predictions = await model.detect(video);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    predictions.forEach(p => {
+                        ctx.strokeStyle = '#00FF00';
+                        ctx.strokeRect(p.bbox[0], p.bbox[1], p.bbox[2], p.bbox[3]);
+                        ctx.strokeText(p.class, p.bbox[0], p.bbox[1] - 5);
+                    });
+                }, 100);
+            } catch (err) {
+                alert("Erro ao acessar câmera: " + err);
             }
-            requestAnimationFrame(loop);
-        }
-
-        function abrirSobre() { alert("Keven IA // Desenvolvido por Keven Manuel. Sistema de rastreamento de alvos táticos."); }
-        function mudarCamera(modo) { alert("Para trocar a câmera, por favor, recarregue a página e selecione o modo novamente."); }
+        };
     </script>
 </body>
 </html>
