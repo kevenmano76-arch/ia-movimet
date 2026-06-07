@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <title>Keven IA Pro // Advanced Tracker</title>
+    <title>Keven IA Pro</title>
     <style>
         body { margin: 0; background: black; font-family: monospace; color: #00FF00; overflow: hidden; height: 100vh; }
         #webcam { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
@@ -12,14 +12,15 @@
         /* Tela Inicial */
         #tela-inicial { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .titulo-principal { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #00FF00; margin-bottom: 30px; }
-        .btn-iniciar { padding: 15px 25px; font-size: 16px; border: 2px solid #00FF00; background: transparent; color: #00FF00; cursor: pointer; margin: 10px; }
+        .btn-iniciar { padding: 15px 25px; font-size: 14px; border: 2px solid #00FF00; background: transparent; color: #00FF00; cursor: pointer; margin: 10px; width: 280px; }
         
-        /* Menu e Modal */
+        /* Menu */
         .menu-container { position: fixed; bottom: 15px; right: 15px; z-index: 20; }
-        .btn-menu { background: rgba(0,0,0,0.8); border: 1px solid #00FF00; color: #00FF00; padding: 5px 12px; cursor: pointer; }
-        .menu-opcoes { position: absolute; bottom: 40px; right: 0; background: rgba(0,0,0,0.9); border: 1px solid #00FF00; display: none; flex-direction: column; min-width: 150px; }
-        .menu-opcoes button { background: transparent; border: none; color: #00FF00; padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #111; }
+        .btn-menu { background: rgba(0,0,0,0.8); border: 1px solid #00FF00; color: #00FF00; padding: 10px 20px; cursor: pointer; }
+        .menu-opcoes { position: absolute; bottom: 50px; right: 0; background: black; border: 1px solid #00FF00; display: none; flex-direction: column; min-width: 160px; }
+        .menu-opcoes button { background: transparent; border: none; color: #00FF00; padding: 12px; text-align: left; cursor: pointer; border-bottom: 1px solid #111; }
         
+        /* Modal Sobre */
         #modal-sobre { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 101; display: none; align-items: center; justify-content: center; }
         .modal-content { border: 1px solid #00FF00; padding: 20px; background: black; text-align: center; }
     </style>
@@ -27,9 +28,9 @@
 <body>
 
     <div id="tela-inicial">
-        <div class="titulo-principal">KEVEN RASTREIO // IA</div>
-        <button class="btn-iniciar" onclick="iniciarSistema('multiplo')">RASTREAMENTO DE KEVEN COM IA (MÚLTIPLO)</button>
-        <button class="btn-iniciar" onclick="iniciarSistema('unico')">RASTREAMENTO DE KEVEN COM IA (ÚNICO)</button>
+        <div class="titulo-principal">PANOPTICORE // ADVANCED TRACKER</div>
+        <button class="btn-iniciar" onclick="iniciarModo('multiplo')">RASTREAMENTO DE KEVEN COM IA (MÚLTIPLO)</button>
+        <button class="btn-iniciar" onclick="iniciarModo('unico')">RASTREAMENTO DE KEVEN COM IA (ÚNICO)</button>
     </div>
 
     <div class="menu-container" id="container-menu" style="display: none;">
@@ -43,7 +44,7 @@
 
     <div id="modal-sobre">
         <div class="modal-content">
-            <p>Desenvolvido por Keven Manoel.</p>
+            <p>Desenvolvido por Keven Manoel</p>
             <button onclick="fecharSobre()">X</button>
         </div>
     </div>
@@ -51,32 +52,31 @@
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
-    <!-- Scripts de IA -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
-
     <script>
-        function iniciarSistema(modo) {
-            if(modo === 'multiplo') {
-                alert("Modo Múltiplo ativado (COCO-SSD). Este modo rastreia múltiplos objetos, mas pode ser mais lento/travadinho devido à alta carga de processamento.");
+        function iniciarModo(tipo) {
+            if(tipo === 'multiplo') {
+                alert("AVISO: O modo Múltiplo usa o COCO-SSD para rastrear animais e veículos. Ele é mais pesado e pode parecer mais travadinho.");
             } else {
-                alert("Modo Único ativado (MediaPipe). Focado exclusivamente em um único alvo humano. Sistema instantâneo e de alta precisão.");
+                alert("AVISO: O modo Único usa MediaPipe. Focado exclusivamente em humanos, é instantâneo e de alta precisão.");
             }
+            
             document.getElementById('tela-inicial').style.display = 'none';
             document.getElementById('container-menu').style.display = 'block';
             document.getElementById('webcam').style.display = 'block';
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => document.getElementById('webcam').srcObject = s);
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => { document.getElementById('webcam').srcObject = stream; });
         }
 
         function alternarMenu() {
-            const menu = document.getElementById('menu-opcoes');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+            const m = document.getElementById('menu-opcoes');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
         }
 
         function abrirSobre() { document.getElementById('modal-sobre').style.display = 'flex'; }
         function fecharSobre() { document.getElementById('modal-sobre').style.display = 'none'; }
-        function mudarCamera(face) { alert("Câmera alterada para: " + face); }
+        function mudarCamera(pos) { alert("Câmera alterada para " + pos); }
     </script>
 </body>
 </html>
+
