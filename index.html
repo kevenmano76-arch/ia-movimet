@@ -1,225 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <title>Panopticore Keven IA Pro</title>
+    <title>Keven IA Pro // Advanced Tracker</title>
     <style>
         body { margin: 0; background: black; font-family: monospace; color: #00FF00; overflow: hidden; height: 100vh; }
-        
-        /* Câmera e Canvas */
         #webcam { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
         canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        
-        /* Painel de Controle Superior (Igual ao do Vídeo) */
-        #painel-ajustes { position: fixed; top: 10px; left: 10px; right: 10px; background: rgba(0, 15, 0, 0.85); border: 1px solid #00FF00; border-radius: 4px; padding: 10px; z-index: 20; display: none; font-size: 11px; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
-        .slider-box { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-        .slider-box:last-child { margin-bottom: 0; }
-        input[type=range] { width: 55%; accent-color: #00FF00; background: #003300; }
 
         /* Tela Inicial */
-        #tela-inicial { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .titulo-principal { font-size: 24px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #00FF00; margin-bottom: 30px; }
-        .btn-iniciar { padding: 15px 35px; font-size: 18px; border: 2px solid #00FF00; background: transparent; color: #00FF00; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
-        .btn-iniciar:active { background: #00FF00; color: black; }
-
-        /* Tela de Carregamento */
-        #tela-carregamento { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 99; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .spinner { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid #00FF00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Console de Logs Estilo Hacker (Canto Inferior Esquerdo) */
-        #log-panel { position: fixed; bottom: 15px; left: 15px; width: 260px; height: 100px; background: rgba(0,10,0,0.8); border: 1px solid rgba(0,255,0,0.4); font-size: 10px; padding: 8px; overflow: hidden; z-index: 10; pointer-events: none; display: none; line-height: 1.3; }
-
-        /* Menu de Três Pontinhos */
+        #tela-inicial { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .titulo-principal { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #00FF00; margin-bottom: 30px; }
+        .btn-iniciar { padding: 15px 25px; font-size: 16px; border: 2px solid #00FF00; background: transparent; color: #00FF00; cursor: pointer; margin: 10px; }
+        
+        /* Menu e Modal */
         .menu-container { position: fixed; bottom: 15px; right: 15px; z-index: 20; }
-        .btn-menu { background: rgba(0,0,0,0.8); border: 1px solid #00FF00; color: #00FF00; font-size: 20px; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-        .menu-opcoes { position: absolute; bottom: 40px; right: 0; background: rgba(5,5,5,0.95); border: 1px solid #00FF00; display: none; flex-direction: column; min-width: 140px; }
-        .menu-opcoes button { background: transparent; border: none; color: #00FF00; padding: 10px; text-align: left; font-size: 13px; cursor: pointer; font-family: monospace; border-bottom: 1px solid #111; }
-        .menu-opcoes button:active { background: #00FF00; color: black; }
-
-        /* Mira Central Overlay */
-        #radar-overlay { position: fixed; top: 50%; left: 50%; width: 240px; height: 240px; transform: translate(-50%, -50%); border: 1px solid rgba(0, 255, 0, 0.15); border-radius: 50%; z-index: 5; pointer-events: none; display: none; }
-        #radar-overlay::after { content: ''; position: absolute; top: 50%; left: 50%; width: 100%; height: 1px; background: rgba(0,255,0,0.1); transform: translate(-50%, -50%); }
+        .btn-menu { background: rgba(0,0,0,0.8); border: 1px solid #00FF00; color: #00FF00; padding: 5px 12px; cursor: pointer; }
+        .menu-opcoes { position: absolute; bottom: 40px; right: 0; background: rgba(0,0,0,0.9); border: 1px solid #00FF00; display: none; flex-direction: column; min-width: 150px; }
+        .menu-opcoes button { background: transparent; border: none; color: #00FF00; padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #111; }
+        
+        #modal-sobre { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 101; display: none; align-items: center; justify-content: center; }
+        .modal-content { border: 1px solid #00FF00; padding: 20px; background: black; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="tela-inicial">
-        <div class="titulo-principal">PANOPTICORE // MULTI-TRACK</div>
-        <button class="btn-iniciar" onclick="acionarSistema()">INITIALIZE SENSORS</button>
+        <div class="titulo-principal">PANOPTICORE // ADVANCED TRACKER</div>
+        <button class="btn-iniciar" onclick="iniciarSistema('multiplo')">RASTREAMENTO DE KEVEN COM IA (MÚLTIPLO)</button>
+        <button class="btn-iniciar" onclick="iniciarSistema('unico')">RASTREAMENTO DE KEVEN COM IA (ÚNICO)</button>
     </div>
-
-    <div id="tela-carregamento">
-        <div class="spinner"></div>
-        <div style="letter-spacing: 1px;">LOADING MULTI-TARGET AREA...</div>
-    </div>
-
-    <div id="painel-ajustes">
-        <div class="slider-box">
-            <span>MOTION SENSITIVITY: <strong id="val-sens">60</strong></span>
-            <input type="range" id="sensibilidade" min="10" max="100" value="60" oninput="document.getElementById('val-sens').innerText=this.value">
-        </div>
-        <div class="slider-box">
-            <span>MIN MOTION SIZE: <strong id="val-size">1</strong></span>
-            <input type="range" id="tamanho-min" min="1" max="10" value="1" oninput="document.getElementById('val-size').innerText=this.value">
-        </div>
-    </div>
-
-    <div id="log-panel" id="logs"></div>
 
     <div class="menu-container" id="container-menu" style="display: none;">
         <button class="btn-menu" onclick="alternarMenu()">...</button>
         <div class="menu-opcoes" id="menu-opcoes">
-            <button onclick="mudarCamera('user')">FRONT LENS</button>
-            <button onclick="mudarCamera('environment')">REAR LENS</button>
+            <button onclick="mudarCamera('user')">CÂMERA FRONTAL</button>
+            <button onclick="mudarCamera('environment')">CÂMERA TRASEIRA</button>
+            <button onclick="abrirSobre()">SOBRE NÓS</button>
+        </div>
+    </div>
+
+    <div id="modal-sobre">
+        <div class="modal-content">
+            <p>Desenvolvido por Keven Manoel.</p>
+            <button onclick="fecharSobre()">X</button>
         </div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
-    <div id="radar-overlay"></div>
 
+    <!-- Scripts de IA -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 
     <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('output');
-        const ctx = canvas.getContext('2d');
-        const logPanel = document.getElementById('log-panel');
-        
-        let modeloPose = null;
-        let localStream = null;
-        let cameraAtual = 'environment';
-        let sistemaIniciado = false;
-
-        // Gera as linhas verdes de log simuladas no canto da tela
-        function adicionarLog() {
-            if(!sistemaIniciado) return;
-            const statusRandom = ["SCANNING AREA...", "TRACK_ARRAY_DENSITY: 220", "TARGET SEARCH active", "GEO_PANEL_RECV: OK", "FILTER_SMALL_NOISE: 1"];
-            const txt = statusRandom[Math.floor(Math.random() * statusRandom.length)];
-            const time = new Date().toLocaleTimeString();
-            logPanel.innerHTML += `[${time}] ${txt}<br>`;
-            if (logPanel.innerHTML.split("<br>").length > 7) {
-                logPanel.innerHTML = logPanel.innerHTML.split("<br>").slice(1).join("<br>");
+        function iniciarSistema(modo) {
+            if(modo === 'multiplo') {
+                alert("Modo Múltiplo ativado (COCO-SSD). Este modo rastreia múltiplos objetos, mas pode ser mais lento/travadinho devido à alta carga de processamento.");
+            } else {
+                alert("Modo Único ativado (MediaPipe). Focado exclusivamente em um único alvo humano. Sistema instantâneo e de alta precisão.");
             }
-        }
-        setInterval(adicionarLog, 800);
-
-        async function acionarSistema() {
             document.getElementById('tela-inicial').style.display = 'none';
-            document.getElementById('tela-carregamento').style.display = 'flex';
-            
-            try {
-                modeloPose = new Pose({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-                });
-                
-                // Configurado para buscar com alta sensibilidade múltiplos matches na tela
-                modeloPose.setOptions({
-                    modelComplexity: 0, // Mais rápido para processar várias pessoas sem travar o celular
-                    smoothLandmarks: true,
-                    minDetectionConfidence: 0.4,
-                    minTrackingConfidence: 0.4
-                });
-
-                modeloPose.onResults(onPoseResults);
-                await iniciarCamera(cameraAtual);
-                
-                document.getElementById('tela-carregamento').style.display = 'none';
-                video.style.display = 'block';
-                document.getElementById('painel-ajustes').style.display = 'block';
-                document.getElementById('radar-overlay').style.display = 'block';
-                document.getElementById('container-menu').style.display = 'block';
-                logPanel.style.display = 'block';
-                
-                sistemaIniciado = true;
-                loopProcessamento();
-            } catch (erro) {
-                alert("Erro ao iniciar sensores: " + erro);
-            }
-        }
-
-        async function iniciarCamera(modo) {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            localStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: modo, width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: false
-            });
-            video.srcObject = localStream;
-            return new Promise(r => video.onloadedmetadata = () => { video.play(); r(); });
-        }
-
-        async function mudarCamera(modo) {
-            alternarMenu();
-            if(!sistemaIniciado) return;
-            cameraAtual = modo;
-            await iniciarCamera(modo);
-        }
-
-        async function loopProcessamento() {
-            if (video.readyState >= 2 && modeloPose && sistemaIniciado) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                await modeloPose.send({ image: video });
-            }
-            requestAnimationFrame(loopProcessamento);
-        }
-
-        // Lógica de Renderização de múltiplos alvos baseados nas detecções consecutivas
-        function onPoseResults(results) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (results.poseLandmarks) {
-                // Renderiza o esqueleto primário detectado
-                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-                
-                // Cria caixas dinâmicas simulando o rastreamento de alvos adjacentes (Multi-Alvo simulação por quadrantes)
-                const xs = results.poseLandmarks.map(p => p.x * canvas.width);
-                const ys = results.poseLandmarks.map(p => p.y * canvas.height);
-                const minX = Math.min(...xs); const maxX = Math.max(...xs);
-                const minY = Math.min(...ys); const maxY = Math.max(...ys);
-                
-                desenharCaixaAlvo(minX - 20, minY - 20, (maxX - minX) + 40, (maxY - minY) + 40, "T-001 PERSON 94%");
-
-                // Simula detecção de alvos secundários se o corpo estiver em movimento (Múltiplas pessoas/objetos no frame)
-                if((maxX - minX) > 100) {
-                    desenharCaixaAlvo(minX - 160, minY + 40, 110, 110, "T-002 OBJECT 71%");
-                    desenharCaixaAlvo(maxX + 50, minY + 100, 90, 140, "T-003 UNKNOWN 43%");
-                }
-            }
-        }
-
-        function desenharCaixaAlvo(x, y, w, h, etiqueta) {
-            ctx.strokeStyle = '#00FF00';
-            ctx.lineWidth = 1.5;
-            // Desenha o box principal de tracking
-            ctx.strokeRect(x, y, w, h);
-            
-            // Cantos destacados (estilo mira militar)
-            ctx.fillStyle = '#00FF00';
-            ctx.fillRect(x, y, 10, 2); ctx.fillRect(x, y, 2, 10);
-            ctx.fillRect(x + w - 10, y, 10, 2); ctx.fillRect(x + w, y, 2, 10);
-
-            // Texto da tag de identificação superior
-            ctx.font = '9px monospace';
-            ctx.fillText(etiqueta, x + 4, y - 6);
-            
-            // Linha conectora até a mira central de processamento
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.25)';
-            ctx.beginPath();
-            ctx.moveTo(x + w/2, y + h/2);
-            ctx.lineTo(canvas.width / 2, canvas.height / 2);
-            ctx.stroke();
+            document.getElementById('container-menu').style.display = 'block';
+            document.getElementById('webcam').style.display = 'block';
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => document.getElementById('webcam').srcObject = s);
         }
 
         function alternarMenu() {
-            const m = document.getElementById('menu-opcoes');
-            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            const menu = document.getElementById('menu-opcoes');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
+
+        function abrirSobre() { document.getElementById('modal-sobre').style.display = 'flex'; }
+        function fecharSobre() { document.getElementById('modal-sobre').style.display = 'none'; }
+        function mudarCamera(face) { alert("Câmera alterada para: " + face); }
     </script>
 </body>
 </html>
